@@ -266,7 +266,14 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
     @media(min-width:992px){html{font-size:16px;}}
     body{font-family:var(--font);font-size:var(--fs-base);line-height:1.5;
       color:var(--d-tx);background:var(--d-bg);
-      min-height:100vh;}
+      min-height:100vh;
+      /* Rede de segurança replicando o body{} do site oficial gov.br/codevasf
+         (overflow-x:hidden + min-width:320px): nenhum grid/heatmap/dropdown do
+         painel deveria gerar scroll horizontal na página, mas se algum widget
+         futuro vazar a viewport, isso contém o vazamento em vez de deixar a
+         página inteira rolar de lado no celular. min-width garante um piso
+         de leiaute para o menor smartphone comum (iPhone SE / Android compacto). */
+      overflow-x:hidden;min-width:320px;}
     body::before{display:none;}
 
     /* ── SKIP LINK (br-skiplink DS) ── */
@@ -327,7 +334,6 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
     body.contraste-alto{background:#000;}
     body.contraste-alto::before{display:none;}
     body.contraste-alto .br-header{background:#000;border-bottom-color:var(--gold-vivid-20);}
-    body.contraste-alto .br-header .header-sign{color:#ffe9a8;}
     body.contraste-alto .br-header .header-title{color:#fff;}
     body.contraste-alto .br-header .header-subtitle{color:#ffe9a8;}
     /* A logo institucional é um JPEG com fundo branco embutido — sobre o
@@ -462,8 +468,9 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
       padding-right:6px;
     }
     .br-header .logo-codevasf{
-      height:var(--hdr-logo-h-mob);width:auto;display:block;
-      object-fit:contain;flex-shrink:0;max-width:220px;
+      height:auto;width:auto;display:block;
+      max-height:var(--hdr-logo-h-mob);max-width:200px;
+      object-fit:contain;flex-shrink:0;
     }
     .br-header .logo-fallback{
       display:none;font-family:var(--font);font-weight:900;
@@ -476,15 +483,21 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
     }
     /* ── Assinatura (item 2 da Anatomia do Header, gov.br DS): descreve uma
        categoria SUPERIOR ao título — fica ao lado da logo, oculta no mobile
-       (Grid de 4 colunas) conforme recomendação explícita do DS. ── */
+       (Grid de 4 colunas) conforme recomendação explícita do DS. Restaurada
+       a pedido — mesmo com o nome do MIDR já aparecendo (pequeno, pouco
+       legível em telas baixas) dentro da imagem da assinatura conjunta, o
+       texto HTML aqui garante legibilidade e mantém o link para o site do
+       MDR. Sempre em exatas 2 linhas (.sign-line é 2 <span> fixos, não
+       depende de quebra automática por largura). ── */
     .br-header .header-sign{
       display:none;color:var(--gray-70);font-size:var(--fs-sm);font-weight:500;
-      line-height:1.3;overflow:hidden;text-decoration:none;
-      text-overflow:ellipsis;white-space:nowrap;min-width:0;
+      line-height:1.3;min-width:0;max-width:230px;text-decoration:none;
     }
+    .br-header .header-sign .sign-line{display:block;white-space:nowrap;}
     .br-header .header-sign:hover,.br-header .header-sign:focus-visible{
       text-decoration:underline;color:var(--cv-blue);
     }
+    body.contraste-alto .br-header .header-sign{color:#ffe9a8;}
     .br-header .header-actions{
       display:flex;align-items:center;gap:var(--sp2);justify-content:flex-end;
       flex-wrap:wrap;flex-shrink:0;
@@ -532,14 +545,26 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
        separada acima do header). Sem o modificador "inverted": aqui o
        fundo é claro (var(--background)), não a faixa escura de antes. ── */
     .br-header .header-actions .br-switch{flex-shrink:0;}
-    /* Abaixo de 576px o header-sign já está oculto e o logo-codevasf-wrap
-       tem min-width:140px (não encolhe) — nessas larguras o header-actions
-       pode não caber ao lado do logo. Em vez de vazar horizontalmente,
-       deixamos o header-actions descer para a própria linha dentro do
-       header-top (ele já quebra seus próprios filhos via flex-wrap). */
+    /* Abaixo de 576px o logo-codevasf-wrap tem min-width:140px (não
+       encolhe) — nessas larguras o header-actions pode não caber ao lado
+       do logo. Em vez de vazar horizontalmente, deixamos o header-actions
+       descer para a própria linha dentro do header-top (ele já quebra
+       seus próprios filhos via flex-wrap). */
     @media(max-width:575.98px){
       .br-header .header-top{flex-wrap:wrap;row-gap:var(--sp1);}
       .br-header .header-actions{justify-content:flex-start;width:100%;}
+      /* Como a linha de ações passa a ficar ancorada à esquerda (regra acima),
+         os acionadores de dropdown (Atalhos institucionais, Atalhos gov.br)
+         ficam coladas à borda esquerda da tela. O .dd-target deles, porém,
+         segue herdando right:0 da regra base — pensada para o caso em que a
+         linha de ações fica à direita do header (≥576px). Abrir para a
+         esquerda nesse contexto empurra o menu inteiro para fora da
+         viewport (era exatamente o bug visto no celular: cabeçalho e menus
+         "desconfigurados", com texto cortado na borda esquerda). Abaixo,
+         invertemos a ancoragem só para os dropdowns dentro de
+         header-actions, que passam a abrir para a direita a partir do
+         próprio acionador, permanecendo dentro da tela. */
+      .br-header .header-actions .dd-target{left:0;right:auto;}
     }
     /* Campo de Busca (Anatomia 10) — Comportamento 3: ao acionar o ícone de
        lupa, o input substitui temporariamente a área de ações, ocupando
@@ -558,7 +583,17 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
     }
     .br-header .header-search .br-input input:focus{border-color:var(--interactive);background:var(--blue-warm-vivid-5);outline:none;}
     .br-header .header-search .br-input .br-button{position:absolute;right:4px;top:50%;transform:translateY(-50%);}
-    @media(min-width:769px){
+    @media(min-width:576px){
+      /* Breakpoint alinhado ao "Comportamento 3 (Busca)" do gov.br DS citado
+         acima (telas largas = input comum; telas estreitas = ícone), que usa
+         o mesmo corte de "tablet portrait" (576px) do restante do Fundamento
+         Grid do DS — antes este bloco usava 769px (copiado do breakpoint de
+         grade de KPIs/conteúdo do painel), o que deixava a busca em modo
+         "ícone" numa faixa (576–768px) onde ela já caberia inline. Se em
+         algum tablet específico isso apertar .header-actions, o flex-wrap já
+         definido nele absorve o excesso quebrando para uma 2ª linha, em vez
+         de vazar a viewport (e agora há overflow-x:hidden no body como
+         reforço). */
       .br-header .header-search-trigger{display:none;}
       .br-header .header-search{display:flex;padding:0;max-width:320px;margin-left:auto;}
     }
@@ -629,18 +664,12 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
     .br-button.circle.large{width:56px;height:56px;font-size:20px;}
     .br-button.circle:hover{background:var(--blue-warm-vivid-5);}
     .br-button.circle.primary{background:var(--interactive);border:none;color:var(--pure-0);}
-    /* Botões flutuantes (FABs): voltar ao topo (some até o usuário rolar a
-       página) e reportar erro (sempre visível). Ambos fora do fluxo normal,
-       não competem com o Magic Button (Comportamentos > Quantidade: só 1
-       Magic Button por tela) — são utilitários, não o CTA principal. */
-    .fab-back-top,.fab-report-error{position:fixed;bottom:var(--sp4);z-index:var(--z-layer-4);}
-    .fab-back-top{right:var(--sp4);transition:opacity var(--dur-fast) var(--ease),transform var(--dur-fast) var(--ease);}
-    .fab-back-top[hidden]{display:none;}
-    .fab-report-error{left:var(--sp4);}
-    @media(max-width:575.98px){
-      .fab-back-top,.fab-report-error{bottom:var(--sp3);}
-      .fab-back-top{right:var(--sp3);} .fab-report-error{left:var(--sp3);}
-    }
+    /* NOTA: os botões flutuantes reais (voltar ao topo / reportar erro) usam
+       as classes .BackToTop-module e .report-error-btn, definidas mais abaixo
+       junto da marcação — cada uma já com seu próprio ajuste de posição em
+       @media(max-width:575px) para não se sobreporem no celular. (Removido
+       aqui um bloco .fab-back-top/.fab-report-error que não correspondia a
+       nenhum elemento do HTML — CSS morto de uma nomenclatura anterior.) */
     .br-button.circle.primary:hover{background:var(--blue-warm-vivid-60);}
     .br-button.circle.secondary{background:var(--gray-2);color:var(--gray-80);border:var(--w-sm) solid var(--gray-20);}
     .br-button.circle.secondary:hover{background:var(--gray-5);}
@@ -649,7 +678,7 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
     /* ── DROPDOWN (data-toggle="dropdown"), conforme Utilitário JS gov.br DS ── */
     .dropdown-wrap{position:relative;display:inline-flex;}
     .dd-target{position:absolute;top:calc(100% + 6px);right:0;z-index:var(--z-layer-2);
-      min-width:220px;background:var(--pure-0);border:var(--w-sm) solid var(--gray-10);
+      min-width:220px;max-width:calc(100vw - 32px);background:var(--pure-0);border:var(--w-sm) solid var(--gray-10);
       border-radius:var(--r-md);box-shadow:var(--sh-level4);overflow:hidden;}
     .dd-target[hidden]{display:none;}
     .dd-target .header{padding:10px 14px;}
@@ -2077,7 +2106,7 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
       .hero-desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:none;}
       .page-cnt{padding:var(--sp4) var(--sp4) var(--sp8);}
       .br-header .container-lg{padding:0 var(--sp4);}
-      .br-header .logo-codevasf{height:var(--hdr-logo-h);}
+      .br-header .logo-codevasf{max-height:38px;max-width:210px;}
       .br-header .header-sign{display:block;}
       .br-header .header-title{font-size:var(--fs-md);}
       .br-header .header-subtitle{display:block;}
@@ -2108,7 +2137,6 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
       }
     }
   
-.br-header .header-sign{display:none;color:var(--gray-70);font-size:var(--fs-sm);font-weight:500;line-height:1.25;text-decoration:none;max-width:390px;min-width:0;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;}.br-header .header-sign .sign-line{display:block;}@media(min-width:992px){.br-header .header-sign{display:block;}}
 .br-sign-in.primary .text-black{color:var(--gray-2);}.br-header .br-button.circle,.br-header .br-button.icon-only{background:transparent;border-color:transparent;border-radius:50%;color:var(--interactive);width:32px;height:32px;padding:0;box-shadow:none;justify-content:center}.br-header .br-button.circle:hover,.br-header .br-button.icon-only:hover{background:var(--blue-warm-vivid-5)}.br-header .header-functions{display:inline-flex;align-items:center;gap:var(--sp1)}.br-header .header-functions .dd-target{min-width:280px}.br-header .header-functions .br-item.status-item{cursor:default;color:var(--gray-70)}.br-header .header-functions .br-item.status-item:hover{background:none;color:var(--gray-70)}
 .find-highlight{background:var(--yellow-vivid-20);color:var(--gray-80);padding:0 2px;border-radius:2px}.find-highlight.current{outline:2px solid var(--focus-color);outline-offset:1px}
 .kpi-c{overflow:visible!important}.kpi-c::before{pointer-events:none;z-index:0}.kpi-c>*{position:relative;z-index:1}.kpi-lbl{position:relative}.kpi-lbl .tt-bubble{z-index:9999!important;white-space:normal;max-width:360px;}
@@ -2155,9 +2183,24 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
     <div class="header-top">
       <div class="header-logo">
         <div class="logo-codevasf-wrap">
+          <!-- A "assinatura conjunta" oficial (Codevasf + Ministério da
+               Integração e do Desenvolvimento Regional + Governo Federal)
+               foi retirada do ar pelo gov.br — por isso o hotlink quebrou
+               em qualquer dispositivo (não era um problema de hash de
+               imagem, era o asset mesmo que não existe mais publicado).
+               A pedido do responsável pelo painel, a imagem oficial foi
+               embutida diretamente aqui como data URI em base64: não há
+               mais NENHUMA dependência de rede para este logo — não pode
+               mais "cair", porque o arquivo agora é parte do próprio HTML.
+               O texto "Ministério da Integração e do Desenvolvimento
+               Regional (MIDR)" ao lado (.header-sign, mais abaixo) foi
+               restaurado a pedido, mesmo a imagem já trazendo esse nome —
+               ele aparece pequeno demais dentro da imagem para ser lido
+               com conforto, então o texto HTML garante legibilidade e
+               mantém o link para o site do MDR. -->
           <img class="logo-codevasf" id="logoCodevasf"
-            src="https://www.gov.br/codevasf/pt-br/centrais-de-conteudo/imagem/identidade-visual/preview-assinatura-conjunta-horizontal.jpeg/@@images/image-1414-686765f8d4755cea788906fad6714100.jpeg"
-            alt="Logotipo da Codevasf — assinatura conjunta com o Governo Federal"
+            src="data:image/png;base64,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"
+            alt="Codevasf — assinatura conjunta com o Ministério da Integração e do Desenvolvimento Regional e o Governo Federal (Governo do Brasil, do lado do povo brasileiro)"
             onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block';">
           <div class="logo-fallback" id="logoFallback">CODEVASF</div>
         </div>
@@ -2813,15 +2856,21 @@ document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='h
             alt="Acesso à Informação"
             onerror="this.parentElement.style.display='none';">
         </a>
-        <!-- Selo "Governo Federal": removida a dependência de imagem hotlinkada de
-             domínio de terceiro não-governamental (ctmmead.medicina.ufmg.br) —
-             problema de proveniência de marca e fragilidade (link fora do
-             controle da Codevasf). Mantido apenas o selo textual com ícone,
-             que já existia como fallback e não depende de nenhuma rede externa.
-             Se a Codevasf tiver/publicar um asset oficial (gov.br) para este
-             selo, trocar o <span> abaixo por <img src="<asset oficial>"
-             ...> com o mesmo fallback. -->
-        <span class="gf-tag" id="footerGovfedFallback"><i class="fas fa-flag" aria-hidden="true"></i> Governo Federal</span>
+        <!-- Selo "Governo Federal": antes era hotlinkado de domínio de terceiro
+             não-governamental (ctmmead.medicina.ufmg.br) — removido por
+             fragilidade/proveniência de marca. Asset oficial real confirmado
+             (variante branca "_04_bco", adequada para o fundo escuro deste
+             rodapé): página de origem .../download-logos/govbr_logo2025_-04_bco.png/view
+             no portal da Secretaria Nacional de Políticas Penais (SENAPPEN);
+             usamos o arquivo binário direto (sem o sufixo /view, que é só o
+             wrapper de página do Plone), no mesmo padrão de URL do logo de
+             Acesso à Informação acima. Fallback textual mantido para o caso
+             de falha de rede, sem dependência de nenhum domínio externo. -->
+        <img class="footer-assign-img" id="footerGovfedImg"
+          src="https://www.gov.br/senappen/pt-br/centrais-de-conteudo/download-logos/govbr_logo2025_-04_bco.png"
+          alt="Governo Federal"
+          onerror="this.style.display='none';document.getElementById('footerGovfedFallback').style.display='inline-flex';">
+        <span class="gf-tag" id="footerGovfedFallback" style="display:none;"><i class="fas fa-flag" aria-hidden="true"></i> Governo Federal</span>
       </div>
     </div>
     <span class="br-divider" aria-hidden="true"></span>
@@ -3196,7 +3245,7 @@ function toggleContraste(checked) {
    ALTURA DO CABEÇALHO — sincroniza --header-h com a altura real
    de .br-header. #navigation usa essa variável para seu sticky top:
    um valor fixo (ex.: 83px) quebra sempre que o cabeçalho muda de
-   altura entre breakpoints (header-sign/subtitle aparecendo, quebra
+   altura entre breakpoints (subtitle aparecendo, quebra
    de linha em telas estreitas etc.) — a navegação fica posicionada
    atrás do cabeçalho, parecendo "desaparecer" ao rolar a página.
 ════════════════════════════════════════════════════════ */
@@ -3447,6 +3496,26 @@ document.querySelectorAll('[data-toggle="accordion"],[data-toggle="collapse"]').
     target.setAttribute('aria-hidden', String(!next));
     if (next) target.removeAttribute('hidden');
     else target.setAttribute('hidden', '');
+  });
+});
+/* Collapses aninhados DENTRO de um dropdown (.dd-target) — hoje, só o
+   "Institucional" dentro do menu de Atalhos institucionais — também se
+   recolhem ao clicar em QUALQUER lugar da tela fora do próprio painel
+   expandido e do botão que o abre, não só clicando de novo nesse mesmo
+   botão. Escopado deliberadamente a triggers dentro de .dd-target: os
+   accordions/collapses persistentes da página (filtros de área/etapa,
+   grupos do menu de seções) ficam de fora dessa regra, porque ali
+   "clicar em qualquer lugar fecha" seria uma armadilha — o usuário
+   perderia o filtro/menu aberto só por clicar em outra parte do painel. */
+document.addEventListener('click', function(ev){
+  document.querySelectorAll('.dd-target [data-toggle="collapse"][aria-expanded="true"]').forEach(function(trigger){
+    var targetId = trigger.getAttribute('data-target');
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    if (trigger.contains(ev.target) || target.contains(ev.target)) return;
+    trigger.setAttribute('aria-expanded', 'false');
+    target.setAttribute('aria-hidden', 'true');
+    target.setAttribute('hidden', '');
   });
 });
 
